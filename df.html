@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ToDo List</title>
+  </head>
+  <body>
+    <h1>ToDo List</h1>
+    {% if user %}
+      <h2>Welcome {{ user.username }}!</h2>
+    {% endif %}
+    
+    {% if g.user is not none %}
+      <h3>Create Project</h3>
+      <form method="post" action="{{ url_for('create_project') }}">
+        <input type="text" name="project_name" placeholder="Project name" required>
+        <button type="submit">Create</button>
+      </form>
+      
+      {% if projects %}
+        <h3>Projects</h3>
+        <ul>
+          {% for project in projects %}
+            <li>{{ project.name }} <button onclick="deleteProject({{ project.id }})">Delete</button></li>
+          {% endfor %}
+        </ul>
+        
+        <h3>Add Task</h3>
+        <form method="post" action="{{ url_for('add_task') }}">
+          <input type="text" name="task_name" placeholder="Task name" required>
+          <select name="project_id">
+            {% for project in projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Add</button>
+        </form>
+        
+        {% for project in projects %}
+          <h3>{{ project.name }}</h3>
+          <ul>
+            {% for task in project.tasks %}
+              <li>
+                {% if task.completed %}
+                  <strike>{{ task.name }}</strike> <button onclick="deleteTask({{ task.id }})">Delete</button>
+                {% else %}
+                  {{ task.name }} 
+                  {% if not loop.first %}
+                    <button onclick="upTask({{ task.id }})">Up</button>
+                  {% endif %}
+                  {% if not loop.last %}
+                    <button onclick="downTask({{ task.id }})">Down</button>
+                  {% endif %}
+                  <button onclick="deleteTask({{ task.id }})">Delete</button>
+                  <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}">
+                    <button type="submit">Complete</button>
+                  </form>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% else %}
+        <p>No projects yet.</p>
+      {% endif %}
+      
+    {% else %}
+      <p>Please login as a Free member to access this page.</p>
+    {% endif %}
+    
+    <script>
+      function deleteProject(id) {
+        if (confirm("Are you sure you want to delete this project?")) {
+          fetch(`/delete_project/${id}`, {method: 'POST'}).then(() => {
+            location.reload();
+          });
+        }
+      }
+      
+      function deleteTask(id) {
+        if (confirm("Are you sure you want to delete this task?")) {
+          fetch(`/delete_task/${id}`, {method: 'POST'}).then(() => {
+            location.reload();
+          });
+        }
+      }
+      
+      function upTask(id) {
+        fetch(`/move_task/${id}/up`, {method: 'POST'}).then(() => {
+          location.reload();
+        });
+      }
+      
+      function downTask(id) {
+        fetch(`/move_task/${id}/down`, {method: 'POST'}).then(() => {
+          location.reload();
+        });
+      }
+    </script>
+  </body>
+</html>
