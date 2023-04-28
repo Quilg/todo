@@ -190,6 +190,9 @@ def todo():
             else:
                 db.execute('INSERT INTO projects (name, user_id) VALUES (?, ?)', (project_name, g.user[0]))
                 db.commit()
+    elif request.method == 'GET':
+        
+
 
         # Create a new task
         if request.form.get('task_name'):
@@ -254,30 +257,6 @@ def create_task():
     
     return redirect(url_for('todo'))
 
-
-
-@app.route('/delete_task/<int:task_id>', methods=['GET'])
-def delete_task():
-    check_user()
-
-    if g.user is None:
-        return redirect(url_for('login'))
-
-    db = get_connection()
-    
-    # Get the task_id from the form
-    task_id = request.form.get('task_id')
-
-    # Delete the task
-    db.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
-    
-    # Commit changes to the database
-    db.commit()
-
-    return redirect(url_for('todo'))
-
-
-
 @app.route('/delete_project/<int:project_id>', methods=['GET'])
 def delete_project(project_id):
     check_user()
@@ -286,6 +265,23 @@ def delete_project(project_id):
     db.execute('DELETE FROM tasks WHERE project_id = ? AND user_id = ?', (project_id, g.user[0]))
     db.commit()
     flash('Project deleted successfully!', 'success')
+    return redirect(url_for('todo'))
+
+@app.route('/delete_task/<int:task_id>', methods=['GET'])
+def delete_task(task_id):
+    check_user()
+    db = get_connection()
+    db.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+    db.commit()
+    flash('Task deleted successfully!', 'success')
+    return redirect(url_for('todo'))
+
+@app.route('/complete_task/<int:task_id>', methods=['GET'])
+def complete_task(task_id):
+    check_user()
+    db = get_connection()
+    db.execute('UPDATE tasks SET completed = 1 WHERE id = ?', (task_id,))
+    db.commit()
     return redirect(url_for('todo'))
 
 @app.route('/upgrade', methods=['GET'])

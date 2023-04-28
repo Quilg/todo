@@ -5,7 +5,7 @@
 </head>
 <body>
 	<h1>My ToDo List</h1>
-
+	<a href="/">Home</a>
 	<!-- Create a new project form -->
 	<form method="POST" action="/create_project">
 		<label for="project_name">Project Name:</label>
@@ -19,26 +19,10 @@
 			<li>
 				{{ project[1] }}
 				<a href="/delete_project/{{ project[0] }}">Delete</a>
-				{% if project[0] == tasks[2] %}
-					<ul>
-						{% for task in tasks %}
-							<li>
-								{{ task[1] }}
-								{% if task[3] %}
-									<span>(Completed)</span>
-								{% else %}
-									<a href="/complete_task/{{ task[0] }}">Mark as Completed</a>
-									<a href="/delete_task/{{ task[0] }}">Delete</a>
-								{% endif %}
-							</li>
-						{% endfor %}
-					</ul>
-				{% endif %}
 			</li>
 		{% endfor %}
 	</ul>
 
-	<!-- Create a new task form -->
 	<form method="POST" action="/create_task">
 		<label for="task_name">Task Name:</label>
 		<input type="text" name="task_name" id="task_name" required>
@@ -54,25 +38,31 @@
 	</form>
 
 	{% if tasks %}
+	{% for project in projects %}
 		<!-- List of tasks for selected project -->
-		<h2>Tasks for {{ selected_project_name }}</h2>
+		<h2>Tasks for {{ project[1] }}</h2>
 		<ul>
 			{% for task in tasks %}
-				<li>
-					{{ task[1] }}
-					{% if task[3] %}
-						<span>(Completed)</span>
-					{% else %}
-						<a href="/complete_task/{{ task.id }}">Mark as Completed</a>
-						<a href="/delete_task/{{ task.id }}">Delete</a>
-					{% endif %}
-				</li>
+				{% if task[2] == project[0] %}
+					<li>
+						{{ task[1] }}
+						{% if task[3] %}
+							<span>(Completed✅)</span>
+							<a href="/delete_task/{{ task[0] }}">Delete</a>
+						{% else %}
+							<a href="/complete_task/{{ task[0] }}">Complete</a>
+							<a href="/delete_task/{{ task[0] }}">Delete</a>
+						{% endif %}
+					</li>
+				{% endif %}
 			{% endfor %}
 		</ul>
-	{% endif %}
+	{% endfor %}
+{% endif %}
+
 
 	<!-- Filter tasks by date -->
-	<h2>Filter Tasks</h2>
+	<!-- <h2>Filter Tasks</h2>
 	<form method="POST" action="/filter_tasks">
 		<label for="date">Date:</label>
 		<input type="date" name="date" id="date" required>
@@ -85,7 +75,7 @@
 		</select>
 
 		<button type="submit">Filter</button>
-	</form>
-	<br><br><a href="/">Home</a>
+	</form> -->
+
 </body>
 </html>
