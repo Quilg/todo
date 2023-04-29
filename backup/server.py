@@ -8,11 +8,9 @@ app.config['SESSION_TYPE'] = 'filesystem'
 MAX_TASKS_PER_PROJECT = 15
 MAX_PROJECTS = 5
 
-
 def get_connection():
     conn = sqlite3.connect("todo.db")
     return conn
-    
 
 def check_user():
     user_id = session.get('user_id')
@@ -21,17 +19,17 @@ def check_user():
     else:
         db = get_connection()
         g.user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-        
+
 def get_project_count():
     db = get_connection()
-    project_count = db.execute('SELECT COUNT(*) FROM projects WHERE user_id = ?', (g.user[0],)).fetchone()[0]
+    project_count = db.execute('SELECT COUNT(*) FROM porjects WHERE user_id = ?', (g.user[0],)).fetchone()[0]
     return project_count
 
 def get_task_count(project_id):
     db = get_connection()
     task_count = db.execute('SELECT COUNT(*) FROM tasks WHERE project_id = ?', (project_id,)).fetchone()[0]
-    return task_count        
-        
+    return task_count
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -67,6 +65,8 @@ def create_tables():
         FOREIGN KEY (project_id) REFERENCES projects (id),
         FOREIGN KEY (user_id) REFERENCES users (id))
     """)
+    db.commit()
+
 create_tables()
     
 @app.route("/")
@@ -91,95 +91,40 @@ def login():
         else:
             session.clear()
             session['user_id'] = user[0]
-            if user[3] == 'admin':
-                return redirect(url_for('dashboard'))
-            else:
-                return redirect(url_for('profile'))
-        print(error)
+            flash('You were successfully logged in')
+            return redirect(url_for('home'))
 
-    return render_template('auth/login.html')
+        flash(error)
 
+    return render_template('login.html')
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username'].strip()
         password = request.form['password']
-        confirm_password = request.form['confirm_password']
+        role = request.form['role']
+
+        db = get_connection()
 
         error = None
+        user = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
 
-        if password != confirm_password:
-            error = "Passwords do not match" 
+        if not username:
+            error = 'Username is required'
+        elif not password:
+            error = 'Password is required'
+        elif user is not None:
+            error = f"User {username} is already registered."
         else:
-            db = get_connection()
-            user = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+            db.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', (username, password, role))
+            db.commit()
+            flash('You were successfully registered')
+            return redirect(url_for('login'))
 
-            if user is not None:
-                error = "Username already exists"
-            else:
-                db.execute('INSERT INTO users(username, password, role, status) VALUES (?, ?, ?, ?)', (username, password, 'free', 'active')) 
-                db.commit()
-                return redirect(url_for('login'))
-        
-        print(error)
+        flash(error)
 
-    return render_template('auth/register.html')
-
-@app.route('/profile')
-def profile():
-    check_user()
-    if g.user is None:
-        return redirect(url_for('login'))
-    return render_template('profile.html')
-
-@app.route('/dashboard')
-def dashboard():
-    check_user()
-    if g.user is None or g.user[3] != 'admin':
-        return redirect(url_for('login'))
-    if g.user[3] == 'admin':
-        db = get_connection()
-        users = db.execute('SELECT * FROM users WHERE role != "admin"').fetchall()
-        return render_template('dashboard.html', users=users)
-    return redirect(url_for('profile'))
-
-@app.route('/dashboard/upgrade/<int:user_id>', methods=['POST'])
-def upgrade_user(user_id):
-
-    db = get_connection()
-    db.execute('UPDATE users SET role = "premium" WHERE id = ?', (user_id,))
-    db.commit()
-
-    return redirect(url_for('dashboard'))
-
-
-@app.route('/dashboard/terminate/<int:user_id>', methods=['POST'])
-def terminate_user(user_id):
-
-    db = get_connection()
-    db.execute('UPDATE users SET status = "terminated" WHERE id = ?', (user_id,))
-    db.commit()
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/dashboard/downgrade/<int:user_id>', methods=['POST'])
-def downgrade_user(user_id):
-    
-    db = get_connection()
-    db.execute('UPDATE users SET role = "free" WHERE id = ?', (user_id,))
-    db.commit()
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/dashboard/activate/<int:user_id>', methods=['POST'])
-def activate_user(user_id):
-
-    db = get_connection()
-    db.execute('UPDATE users SET status = "active" WHERE id = ?', (user_id,))
-    db.commit()
-
-    return redirect(url_for('dashboard'))
+    return render_template('register.html')
 
 @app.route('/create_project', methods=['POST'])
 def create_project():
@@ -232,21 +177,26 @@ def create_task():
 
     return redirect(url_for('todo'))
 
-@app.route('/complete_task/<int:task_id>', methods=['GET'])
+@app.route('/complete_task/<int:task_id>')
 def complete_task(task_id):
     check_user()
+    if g.user is None:
+        return redirect(url_for('login'))
     db = get_connection()
     db.execute('UPDATE tasks SET completed = 1 WHERE id = ?', (task_id,))
     db.commit()
+
     return redirect(url_for('todo'))
 
-@app.route('/delete_task/<int:task_id>', methods=['GET'])
+@app.route('/delete_task/<int:task_id>')
 def delete_task(task_id):
     check_user()
+    if g.user is None:
+        return redirect(url_for('login'))
     db = get_connection()
     db.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
     db.commit()
-    flash('Task deleted successfully!', 'success')
+
     return redirect(url_for('todo'))
 
 @app.route('/todo', methods=['POST', 'GET'])
@@ -283,21 +233,6 @@ def todo():
 
     # Get all projects and tasks for the current user
     projects = db.execute('SELECT * FROM projects WHERE user_id = ?', (g.user[0],)).fetchall()
-    tasks = db.execute('SELECT * FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE user_id = ?)', (g.user[0],)).fetchall()
+    tasks = db.execute('SELECT * FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE user_id = ?) AND completed = 0', (g.user[0],)).fetchall()
 
     return render_template('todo.html', user=g.user, projects=projects, tasks=tasks)
-
-@app.route('/upgrade', methods=['GET'])
-def upgrade():
-    db = get_connection()
-    check_user()
-    user_id = g.user[0]
-    db.execute('UPDATE users SET role = "premium" WHERE id = ?', (user_id,))
-    db.commit()
-    flash('Your account has been upgraded to premium!', 'success')
-    return redirect(url_for('profile'))
-
-    
-    
-
-
