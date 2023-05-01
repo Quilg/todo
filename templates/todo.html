@@ -18,7 +18,7 @@
 		{% for project in projects %}
 			<li>
 				{{ project[1] }}
-				<a href="/edit_project/{{ project[0] }}">Edit</a>
+				<button onclick="editProject('{{ project.id }}')">Edit</button></li>
 				<a href="/delete_project/{{ project[0] }}">Delete</a>
 			</li>
 		{% endfor %}
@@ -54,7 +54,7 @@
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
 						{% else %}
 							<a href="/complete_task/{{ task[0] }}">Complete</a>
-							<a href="/edit_task/{{ task[0] }}">Edit</a>
+							<button onclick="editTask('{{ task.id }}')">Edit</button></li>
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
 						{% endif %}
 					</li>
@@ -64,22 +64,14 @@
 	{% endfor %}
 {% endif %}
 
-
-	<!-- Filter tasks by date -->
-	<!-- <h2>Filter Tasks</h2>
-	<form method="POST" action="/filter_tasks">
-		<label for="date">Date:</label>
-		<input type="date" name="date" id="date" required>
-
-		<label for="status">Status:</label>
-		<select name="status" id="status" required>
-			<option value="today">Today</option>
-			<option value="past">Past (Incomplete)</option>
-			<option value="future">Future</option>
-		</select>
-
-		<button type="submit">Filter</button>
-	</form> -->
+<div id="edit-popup" style="display:none;">
+    <form id="edit-form" onsubmit="return false;">
+      <label for="new-name">New name:</label>
+      <input type="text" id="new-name" name="new_name">
+      <input type="submit" value="Save" onclick="saveName()">
+      <input type="button" value="Cancel" onclick="hidePopup()">
+    </form>
+</div>
 
 </body>
 </html>

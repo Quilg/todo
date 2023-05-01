@@ -1,4 +1,4 @@
-import datetime
+
 from flask import Flask, flash, render_template, request, redirect, url_for, session, g, send_from_directory
 import sqlite3
 
@@ -297,7 +297,12 @@ def upgrade():
     flash('Your account has been upgraded to premium!', 'success')
     return redirect(url_for('profile'))
 
-    
-    
+@app.route('/undo_task/<int:task_id>', methods=['GET'])
 
+def undo_task(task_id):
+    check_user()
+    db = get_connection()
+    db.execute('UPDATE tasks SET completed = 0 WHERE id = ?', (task_id,))
+    db.commit()
+    return redirect(url_for('todo'))
 
