@@ -306,3 +306,20 @@ def undo_task(task_id):
     db.commit()
     return redirect(url_for('todo'))
 
+@app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
+def edit_task(task_id):
+    if request.method == 'POST':
+        new_task_name = request.form.get('new_task_name')
+        db = get_connection()
+        db.execute("UPDATE tasks SET name = ? WHERE id = ?", (new_task_name, task_id))
+        db.commit()
+        return redirect(url_for('todo'))
+
+@app.route('/edit_project/<int:project_id>', methods=['GET', 'POST'])
+def edit_project(project_id):
+    if request.method == 'POST':
+        new_project_name = request.form.get('new_project_name')
+        db = get_connection()
+        db.execute("UPDATE projects SET name = ? WHERE id = ?", (new_project_name, project_id))
+        db.commit()
+        return redirect(url_for('todo'))

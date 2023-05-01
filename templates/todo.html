@@ -18,7 +18,7 @@
 		{% for project in projects %}
 			<li>
 				{{ project[1] }}
-				<button onclick="editProject('{{ project.id }}')">Edit</button></li>
+				<button onclick="editProjectName('{{ project[0] }}', '{{ project[1] }}')">Edit</button></li>
 				<a href="/delete_project/{{ project[0] }}">Delete</a>
 			</li>
 		{% endfor %}
@@ -54,7 +54,7 @@
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
 						{% else %}
 							<a href="/complete_task/{{ task[0] }}">Complete</a>
-							<button onclick="editTask('{{ task.id }}')">Edit</button></li>
+							<button onclick="editTaskName('{{ task[0] }}', '{{ task[1] }}')">Edit</button></li>
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
 						{% endif %}
 					</li>
@@ -64,14 +64,40 @@
 	{% endfor %}
 {% endif %}
 
-<div id="edit-popup" style="display:none;">
-    <form id="edit-form" onsubmit="return false;">
-      <label for="new-name">New name:</label>
-      <input type="text" id="new-name" name="new_name">
-      <input type="submit" value="Save" onclick="saveName()">
-      <input type="button" value="Cancel" onclick="hidePopup()">
-    </form>
-</div>
+<script>
+	function editProjectName(projectId, currentName) {
+	  var newName = prompt("Enter a new name for the project", currentName);
+	  if (newName !== null) {
+		var form = document.createElement("form");
+		form.method = "POST";
+		form.action = "/edit_project/" + projectId;
+		var input = document.createElement("input");
+		input.type = "text";
+		input.name = "new_project_name";
+		input.value = newName;
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
+	  }
+	}
+	
+	function editTaskName(taskId, currentName) {
+	  var newName = prompt("Enter a new name for the task", currentName);
+	  if (newName !== null) {
+		var form = document.createElement("form");
+		form.method = "POST";
+		form.action = "/edit_task/" + taskId;
+		var input = document.createElement("input");
+		input.type = "text";
+		input.name = "new_task_name";
+		input.value = newName;
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
+	  }
+	}
+</script>
+	
 
 </body>
 </html>
