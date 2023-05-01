@@ -55,6 +55,11 @@
 						{% else %}
 							<a href="/complete_task/{{ task[0] }}">Complete</a>
 							<button onclick="editTaskName('{{ task[0] }}', '{{ task[1] }}')">Edit</button></li>
+							<form method="POST" action="/upload_file/{{ task[0] }}" enctype="multipart/form-data">
+								<label for="file">Attach:</label>
+								<input type="file" name="file" id="file">
+								<button type="submit">Upload</button>
+							</form>
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
 						{% endif %}
 					</li>

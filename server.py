@@ -323,3 +323,4 @@ def edit_project(project_id):
         db.execute("UPDATE projects SET name = ? WHERE id = ?", (new_project_name, project_id))
         db.commit()
         return redirect(url_for('todo'))
+    
