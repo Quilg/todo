@@ -55,12 +55,20 @@
 						{% else %}
 							<a href="/complete_task/{{ task[0] }}">Complete</a>
 							<button onclick="editTaskName('{{ task[0] }}', '{{ task[1] }}')">Edit</button></li>
-							<form method="POST" action="/upload_file/{{ task[0] }}" enctype="multipart/form-data">
-								<label for="file">Attach:</label>
+							<form method="POST" action="/uploader" enctype="multipart/form-data">
 								<input type="file" name="file" id="file">
 								<button type="submit">Upload</button>
 							</form>
 							<a href="/delete_task/{{ task[0] }}">Delete</a>
+							{% with messages = get_flashed_messages(with_categories=true) %}
+								{% if messages %}
+									{% for category, message in messages %}
+									<div class="alert alert-{{ category }}">
+										{{ message }}
+									</div>
+									{% endfor %}
+								{% endif %}
+							{% endwith %}
 						{% endif %}
 					</li>
 				{% endif %}

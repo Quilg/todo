@@ -1,6 +1,8 @@
 
 from flask import Flask, flash, render_template, request, redirect, url_for, session, g, send_from_directory
 import sqlite3
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'kahsfhkj3hk24hhk235asd324jasdjgjfdh'
@@ -8,6 +10,9 @@ app.config['SESSION_TYPE'] = 'filesystem'
 MAX_TASKS_PER_PROJECT = 15
 MAX_PROJECTS = 5
 
+UPLOAD_FOLDER = '/static/'
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def get_connection():
     conn = sqlite3.connect("todo.db")
@@ -323,4 +328,34 @@ def edit_project(project_id):
         db.execute("UPDATE projects SET name = ? WHERE id = ?", (new_project_name, project_id))
         db.commit()
         return redirect(url_for('todo'))
+
+@app.route('/upload/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        check_user()
+        if g.user is None:
+            return redirect(url_for('login'))
+        if not os.path.isdir(app.root_path + '/uploads' + g.user[1]):
+            os.mkdir(app.root_path + '/uploads' + g.user[1])
+        file = request.files['file']
+        file.save(os.path.join(app.root_path + '/uploads/' + g.user[1], + '/', file.filename))
+        return redirect(url_for('todo'))
     
+@app.route('/upload')
+def upload():
+    return redirect(url_for('todo'))
+
+@app.route('/uploader', methods=['POST'])
+def uploader():
+    if request.method == 'POST':
+        check_user()
+        if g.user is None:
+            return redirect(url_for('login'))
+        if not os.path.isdir(app.root_path + '/uploads/' + g.user[1]):
+            os.mkdir(app.root_path + '/uploads/' + g.user[1])
+        file = request.files['file']
+        if file.filename.split('.')[-1] not in ['png', 'pdf']:
+            return "Only png/pdf are allowed"
+        file.save(os.path.join(app.root_path + '/uploads/' + g.user[1] + '/', secure_filename(file.filename)))
+        flash ('Image uploaded successfully!', 'success')
+        return redirect(url_for('todo'))
